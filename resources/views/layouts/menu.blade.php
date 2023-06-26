@@ -14,19 +14,6 @@
     </a>
 </li>
 <li class="nav-title">Menu</li>
-@if(Auth::user()->role === '0')
-<li class="nav-item {{ Request::is('presence') ? 'active' : '' }}">
-    <a class="nav-link" href="{!! route('presence') !!}">
-        <i class="nav-icon cil-home"></i> Kehadiran
-    </a>
-</li>
-<li class="nav-item {{ Request::is('regist-not') ? 'active' : '' }}">
-    <a class="nav-link" href="{!! route('regist-not') !!}">
-        <i class="nav-icon cil-home"></i> Belum Registrasi
-    </a>
-</li>
-@endif
-@if(Auth::user()->role === '1')
 <li class="nav-item {{ Request::is('presence') ? 'active' : '' }}">
     <a class="nav-link" href="{!! route('presence') !!}">
         <i class="nav-icon cil-home"></i> Kehadiran
@@ -42,4 +29,3 @@
         <i class="nav-icon cil-home"></i> Pengguna
     </a>
 </li>
-@endif

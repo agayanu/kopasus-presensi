@@ -1,8 +1,8 @@
-<link rel="stylesheet" href="{{ asset('storage/datetimepicker/css/bootstrap-datetimepicker-4.17.47.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/datetimepicker/css/bootstrap-datetimepicker-4.17.47.css') }}">
 <style>
 @font-face{
     font-family:'Glyphicons Halflings';
-    src:url({{asset('storage/fonts/glyphicons-halflings-regular.woff')}}) format('woff'),url({{asset('storage/fonts/glyphicons-halflings-regular.ttf')}}) format('truetype')
+    src:url({{asset('assets/fonts/glyphicons-halflings-regular.woff')}}) format('woff'),url({{asset('assets/fonts/glyphicons-halflings-regular.ttf')}}) format('truetype')
 }
 .glyphicon{
     position:relative;

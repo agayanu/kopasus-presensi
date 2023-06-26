@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pesat Pelepasan - SMA Plus PGRI Cibinong</title>
-    <link rel="shortcut icon" href="{{ asset('storage/logos/favicon.png') }}" type="image/x-icon">
-    <link rel="stylesheet" href="{{ asset('storage/coreui/css/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('storage/coreui/icons/css/all.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('storage/coreui/simplebar/dist/simplebar.css') }}">
+    <title>Kopasus Presensi - SMA Plus PGRI Cibinong</title>
+    <link rel="shortcut icon" href="{{ asset('assets/logos/favicon.png') }}" type="image/x-icon">
+    <link rel="stylesheet" href="{{ asset('assets/coreui/css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/coreui/icons/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/coreui/simplebar/dist/simplebar.css') }}">
     <style>
         .sidebar-nav .nav-icon {
             flex: 0 0 3rem;
@@ -47,8 +47,8 @@
 <body>
 <div class="sidebar sidebar-dark sidebar-fixed" id="sidebar">
     <div class="sidebar-brand d-none d-md-flex">
-        <img class="sidebar-brand-full" width="55" height="46" src="{{ asset('storage/logos/favicon.png') }}" alt="Pesat Logo"/>
-        <img class="sidebar-brand-narrow" width="46" height="46" src="{{ asset('storage/logos/favicon.png') }}" alt="Pesat Logo"/>
+        <img class="sidebar-brand-full" width="55" height="46" src="{{ asset('assets/logos/favicon.png') }}" alt="Pesat Logo"/>
+        <img class="sidebar-brand-narrow" width="46" height="46" src="{{ asset('assets/logos/favicon.png') }}" alt="Pesat Logo"/>
     </div>
     <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
         @include('layouts.menu')
@@ -66,7 +66,7 @@
                 <i class="nav-icon icon-lg cil-menu"></i>
             </button>
             <a class="header-brand d-md-none" href="{{ url('/') }}">
-                <img class="sidebar-brand-full" width="55" height="46" src="{{ asset('storage/logos/favicon.png') }}" alt="Pesat Logo"/><div class="logoatt">PESAT</div>
+                <img class="sidebar-brand-full" width="55" height="46" src="{{ asset('assets/logos/favicon.png') }}" alt="Pesat Logo"/><div class="logoatt">PESAT</div>
             </a>
         </div>
     </header>
@@ -74,12 +74,12 @@
         @yield('content')
     </div>
     <footer class="footer">
-        <div class="footer-item"><a href="https://smapluspgri.sch.id">Pesat Course</a> © 2023 Departemen TIK.</div>
+        <div class="footer-item"><a href="https://smapluspgri.sch.id">Kopasus Presensi</a> © 2023 Departemen TIK.</div>
         <div class="ms-auto footer-item">Powered by&nbsp;<a href="https://smapluspgri.sch.id">PESAT</a></div>
     </footer>
 </div>
 @yield('footer')
-<script src="{{ asset('storage/coreui/js/coreui.bundle.min.js') }}"></script>
-<script src="{{ asset('storage/coreui/simplebar/dist/simplebar.min.js') }}"></script>
+<script src="{{ asset('assets/coreui/js/coreui.bundle.min.js') }}"></script>
+<script src="{{ asset('assets/coreui/simplebar/dist/simplebar.min.js') }}"></script>
 </body>
 </html>
