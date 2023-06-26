@@ -19,17 +19,15 @@ class RegistController extends Controller
 
     public function student(Request $r)
     {
-        $year = now()->format('Y');
         if($r->ajax())
         {
-            $studentx = DB::table('registers')->select('student')->where('year', $year)->get();
-            $student = [];
-            foreach ($studentx as $s) { 
-                array_push($student, $s->student);
-            }
+            $gen = DB::table('generations')->select('gen')->where('active', 'Y');
+            $event = DB::table('events')->select('id')->where('active', 'Y')->first();
+            $student = DB::table('registers')->select('student')->where('event', $event->id);
             $data = DB::table('students')
                 ->select('id','name','class')
-                ->where([['name','LIKE','%'.$r->term.'%'],['year', $year]])
+                ->where('name','LIKE','%'.$r->term.'%')
+                ->whereIn('gen', $gen)
                 ->whereNotIn('id', $student)
                 ->paginate(10, ['*'], 'page', $r->page);
 
@@ -41,14 +39,11 @@ class RegistController extends Controller
     {
         $rules = [
             'student' => 'required|integer',
-            'parent'  => 'required|string',
         ];
     
         $messages = [
             'student.required' => 'Nama Siswa wajib diisi',
             'student.integer'  => 'Nama Siswa tidak sesuai pilihan',
-            'parent.required'  => 'Nama Lengkap Orangtua wajib diisi',
-            'parent.string'    => 'Nama Lengkap Orangtua harus teks',
         ];
   
         $validator = Validator::make($r->all(), $rules, $messages);
@@ -57,50 +52,27 @@ class RegistController extends Controller
             return redirect()->back()->withErrors($validator)->withInput($r->all);
         }
 
-        $year = now()->format('Y');
+        $event = DB::table('events')->select('id')->where('active', 'Y')->first();
         $student = $r->input('student');
-        $parent = $r->input('parent');
         $check = DB::table('registers')->where('student', $student)->count();
         if($check) {
             return redirect()->back()->with('error', 'Anda sudah registrasi! Silahkan hubungi Operator!');
         }
-        $s = DB::table('students')->select('name','seat_number','seat_number_parent')->where('id', $student)->first();
-        // $seatNumber = 0;
-        // $checkSn = DB::table('registers')->where('year', $year)->count();
-        // if($checkSn) {
-        //     $checkMax = DB::table('registers')->where('year', $year)->max('seat_number');
-        //     $seatNumber = $checkMax + 1;
-        // } else {
-        //     $seatNumber = 1;
-        // }
-        // $seatNumberText = str_pad($seatNumber, 3, "0", STR_PAD_LEFT);
-        do {
-            $uuidx = Str::random(6);
-            $uuid = strtoupper($uuidx);
-        } while (DB::table('registers')->where('uuid', $uuid)->exists());
+        $s = DB::table('students')->select('nrp','name')->where('id', $student)->first();
 
-        // $id = DB::table('registers')->insertGetId([
-        //     'student'     => $student,
-        //     'parent'      => $parent,
-        //     'year'        => $year,
-        //     'uuid'        => $uuid,
-        //     'seat_number' => $seatNumber,
-        //     'created_at'  => now(),
-        // ]);
         $id = DB::table('registers')->insertGetId([
+            'nrp'         => $s->nrp,
             'student'     => $student,
-            'parent'      => $parent,
-            'year'        => $year,
-            'uuid'        => $uuid,
+            'event'       => $event->id,
             'user'        => $s->name,
             'created_at'  => now(),
         ]);
 
-        $image = QrCode::format('png')->size(500)->generate($uuid);
+        $image = QrCode::format('png')->size(500)->generate($s->nrp);
         Storage::disk('local')->put('public/images/qrcode/'.$id.'.png', $image);
         
         $customPaper = array(0,0,481.8897638,623.6220472);
-        $pdf = Pdf::loadView('pdf', ['id'=>$id,'seatNumber'=>$s->seat_number,'seatNumberParent'=>$s->seat_number_parent,'uuid'=>$uuid,'name'=>$s->name])->setPaper($customPaper, 'potrait');
-        return $pdf->stream('QrCode Pesat Pelepasan '.$s->name.'.pdf');
+        $pdf = Pdf::loadView('pdf', ['id'=>$id,'nrp'=>$s->nrp,'name'=>$s->name])->setPaper($customPaper, 'potrait');
+        return $pdf->stream('QrCode Kopasus Presensi '.$s->name.'.pdf');
     }
 }

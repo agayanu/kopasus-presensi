@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="{{ asset('storage/logos/favicon.png') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ asset('assets/logos/kopasus.png') }}" type="image/x-icon">
     <title>Regist - Kopasus Presensi</title>
-    <link rel="stylesheet" href="{{ asset('storage/coreui/css/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('storage/coreui/icons/css/all.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('storage/select2-4.1.0-rc.0/css/select2.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/coreui/css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/coreui/icons/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/select2-4.1.0-rc.0/css/select2.min.css') }}">
     <style>
         .login-bg-container {
-            background-image: url({{ asset('storage/images/bg.jpg') }});
+            background-image: url({{ asset('assets/images/bg.jpg') }});
             background-repeat: no-repeat;
             background-size: cover;
             background-position: center;
@@ -79,8 +79,8 @@
                         <div class="row mb-3">
                             <div class="col-8">
                                 <div class="tmplogo">
-                                    <img src="{{ asset('storage/logos/favicon.png') }}" alt="Logo PESAT" class="logopesat">
-                                    <font class="pesattext">PESAT PELEPASAN</font>
+                                    <img src="{{ asset('assets/logos/kopasus.png') }}" alt="Logo PESAT" class="logopesat">
+                                    <font class="pesattext">KOPASUS PRESENSI</font>
                                 </div>
                             </div>
                             <div class="col-4 text-end">
@@ -94,13 +94,6 @@
                                     <label class="form-label">Nama Siswa</label>
                                     <select name="student" id="student" class="form-select @error('student') is-invalid @enderror" required></select>
                                     @error('student')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-sm-12 mb-3">
-                                    <label class="form-label">Nama Lengkap Orangtua (beserta gelar)</label>
-                                    <input class="form-control @error('parent') is-invalid @enderror" type="text" name="parent" value="{{ old('parent') }}" required>
-                                    @error('parent')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -123,8 +116,8 @@
         </div>
     </div>
 </div>
-<script src="{{ asset('storage/coreui/js/coreui.bundle.min.js') }}"></script>
-<script src="{{ asset('storage/jquery/jquery-3.6.1.min.js') }}"></script>
+<script src="{{ asset('assets/coreui/js/coreui.bundle.min.js') }}"></script>
+<script src="{{ asset('assets/jquery/jquery-3.6.1.min.js') }}"></script>
 <script>
 (function () {
     'use strict';
@@ -146,7 +139,7 @@
     });
 })();
 </script>
-<script src="{{ asset('storage/select2-4.1.0-rc.0/js/select2.min.js') }}"></script>
+<script src="{{ asset('assets/select2-4.1.0-rc.0/js/select2.min.js') }}"></script>
 <script>
 $("#student").select2({
     ajax: {

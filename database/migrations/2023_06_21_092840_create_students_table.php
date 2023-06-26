@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('class');
             $table->enum('division',['RPL','TKJ','MM']);
+            $table->integer('gen');
             $table->timestamps();
         });
     }
