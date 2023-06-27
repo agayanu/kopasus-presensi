@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="{{ asset('storage/logos/favicon.png') }}" type="image/x-icon">
-    <title>Pesat Pelepasan - SMA Plus PGRI Cibinong</title>
-    <link rel="stylesheet" href="{{ asset('storage/coreui/css/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('storage/coreui/icons/css/all.min.css') }}">
+    <link rel="shortcut icon" href="{{ asset('assets/logos/kopasus.png') }}" type="image/x-icon">
+    <title>Kopasus Presensi - SMA Plus PGRI Cibinong</title>
+    <link rel="stylesheet" href="{{ asset('assets/coreui/css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/coreui/icons/css/all.min.css') }}">
     <style>
         .login-bg-container {
-            background-image: url({{ asset('storage/images/bg.jpg') }});
+            background-image: url({{ asset('assets/images/bg.jpg') }});
             background-repeat: no-repeat;
             background-size: cover;
             background-position: center;
@@ -64,8 +64,8 @@
                         <div class="row mb-3">
                             <div class="col-8">
                                 <div class="tmplogo">
-                                    <img src="{{ asset('storage/logos/favicon.png') }}" alt="Logo PESAT" class="logopesat">
-                                    <font class="pesattext">PESAT PELEPASAN</font>
+                                    <img src="{{ asset('assets/logos/kopasus.png') }}" alt="Logo PESAT" class="logopesat">
+                                    <font class="pesattext">KOPASUS PRESENSI</font>
                                 </div>
                             </div>
                             <div class="col-4 text-end">
@@ -77,11 +77,10 @@
                                 <thead>
                                     <tr>
                                         <th>Nama</th>
+                                        <th>Divisi</th>
                                         <th>Kelas</th>
-                                        <th>Orangtua</th>
-                                        <th>Nomor Kursi</th>
-                                        <th>Nomor Kursi Orangtua</th>
-                                        <th>Kehadiran</th>
+                                        <th>Datang</th>
+                                        <th>Pulang</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
@@ -96,11 +95,11 @@
         </div>
     </div>
 </div>
-<script src="{{ asset('storage/coreui/js/coreui.bundle.min.js') }}"></script>
-<script src="{{ asset('storage/jquery/jquery-3.6.1.min.js') }}"></script>
+<script src="{{ asset('assets/coreui/js/coreui.bundle.min.js') }}"></script>
+<script src="{{ asset('assets/jquery/jquery-3.6.1.min.js') }}"></script>
 <script>
 setInterval(function () {
-    $.get("{{ route('presence.show-data') }}", function(response){
+    $.get("{{ route('presence.show-data', ['events'=>$event]) }}".replace(/&amp;/g, "&"), function(response){
         var len = 0;
         $('tbody').empty();
         if(response['data'] != null){
@@ -109,19 +108,17 @@ setInterval(function () {
         if(len > 0){
             for(var i=0; i<len; i++){
                 var name = response['data'][i].name;
+                var division = response['data'][i].division;
                 var classes = response['data'][i].class;
-                var parent = response['data'][i].parent;
-                var seatNumber = response['data'][i].seatNumber;
-                var seatNumberParent = response['data'][i].seatNumberParent;
                 var presence = response['data'][i].presence;
+                var home = response['data'][i].home;
 
                 var tr_str = '<tr>' +
                     '<td>' + name + '</td>' +
+                    '<td>' + division + '</td>' +
                     '<td>' + classes + '</td>' +
-                    '<td>' + parent + '</td>' +
-                    '<td>' + seatNumber + '</td>' +
-                    '<td>' + seatNumberParent + '</td>' +
                     '<td>' + presence + '</td>' +
+                    '<td>' + home + '</td>' +
                 '</tr>';
 
                 $("tbody").append(tr_str);

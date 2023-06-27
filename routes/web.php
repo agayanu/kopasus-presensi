@@ -35,7 +35,6 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('presence')->group(function() {
         Route::get('/', [PresenceController::class, 'index'])->name('presence');
         Route::get('data', [PresenceController::class, 'data'])->name('presence.data');
-        Route::post('/', [PresenceController::class, 'update']);
         Route::get('{id}/print', [PresenceController::class, 'print'])->name('presence.print');
         Route::get('download', [PresenceController::class, 'download'])->name('presence.download');
         Route::get('scan', [PresenceController::class, 'scan'])->name('presence.scan');

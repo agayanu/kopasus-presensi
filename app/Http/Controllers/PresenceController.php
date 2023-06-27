@@ -6,12 +6,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Carbon;
+use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
-// use App\Exports\PresenceExport;
+use App\Exports\PresenceExport;
 
 class PresenceController extends Controller
 {
@@ -33,7 +34,7 @@ class PresenceController extends Controller
             $data = DB::table('registers as a')
                 ->join('students as b', 'a.student','=','b.id')
                 ->join('events as c', 'a.event','=','c.id')
-                ->select('a.id','b.name','b.division','c.name as event','a.user','a.created_at','a.updated_at','a.presence_at');
+                ->select('a.id','b.name','b.division','b.class','c.name as event','a.user','a.created_at','a.presence_at','a.home_at');
             if($eventSelect) { $data = $data->where('a.event', $eventSelect); }
             if($divSelect) { $data = $data->where('b.division', $divSelect); }
             $dataCount = $data->count();
@@ -47,85 +48,46 @@ class PresenceController extends Controller
 
             foreach ( $data as $d ) {
                 $ca = date('d-m-Y H:i:s', strtotime($d->created_at));
-                if($d->updated_at) {
-                    $ua = date('d-m-Y H:i:s', strtotime($d->updated_at));
-                } else {
-                    $ua = null;
-                }
                 if($d->presence_at) {
                     $pa = date('d-m-Y H:i:s', strtotime($d->presence_at));
                 } else {
                     $pa = null;
+                }
+                if($d->home_at) {
+                    $ha = date('d-m-Y H:i:s', strtotime($d->home_at));
+                } else {
+                    $ha = null;
                 }
                 $idEnc = Crypt::encryptString($d->id);
                 $data_fix[] = [
                     'id'       => $idEnc,
                     'name'     => $d->name,
                     'division' => $d->division,
+                    'class'    => $d->class,
                     'event'    => $d->event,
                     'user'     => $d->user,
                     'create'   => $ca,
-                    'update'   => $ua,
-                    'presence' => $pa
+                    'presence' => $pa,
+                    'home'     => $ha
                 ];
             }
 
             return DataTables::of($data_fix)
             ->addColumn('action', function($row){
-                $editBtn = '<button class="btn btn-sm btn-success tooltips" type="button" data-coreui-toggle="modal" data-coreui-target="#edit" 
-                    data-coreui-id="'.$row['id'].'" data-coreui-name="'.$row['name'].'" data-coreui-division="'.$row['division'].'" 
+                $showBtn = '<button class="btn btn-sm btn-success tooltips" type="button" data-coreui-toggle="modal" data-coreui-target="#show" 
+                    data-coreui-name="'.$row['name'].'" data-coreui-division="'.$row['division'].'" data-coreui-class="'.$row['class'].'"
                     data-coreui-event="'.$row['event'].'" data-coreui-user="'.$row['user'].'" data-coreui-create="'.$row['create'].'" 
-                    data-coreui-update="'.$row['update'].'" data-coreui-presence="'.$row['presence'].'">
-                    <i class="cil-pencil" style="font-weight:bold"></i><span class="tooltiptext">Edit</span></button>
+                    data-coreui-presence="'.$row['presence'].'" data-coreui-home="'.$row['home'].'">
+                    <i class="cil-book" style="font-weight:bold"></i><span class="tooltiptext">Detail</span></button>
                     ';
                 $printBtn = '<a href="'.route('presence.print',['id' => $row['id']]).'" target="_blank" class="btn btn-sm btn-secondary tooltips">
                     <i class="cil-print" style="font-weight:bold"></i><span class="tooltiptext">Print</span></a>
                     ';
-                $actionBtn = $editBtn.$printBtn;
+                $actionBtn = $showBtn.$printBtn;
                 return $actionBtn;
             })
             ->rawColumns(['action'])->make(true);
         }
-    }
-
-    public function update(Request $r)
-    {
-        $rules = [
-            'id'     => 'required|string',
-            'parent' => 'required|string',
-        ];
-    
-        $messages = [
-            'id.required'      => 'ID tidak ditemukan',
-            'id.string'        => 'ID tidak sesuai',
-            'parent.required'  => 'Nama Lengkap Orangtua wajib diisi',
-            'parent.string'    => 'Nama Lengkap Orangtua harus teks',
-        ];
-
-        $validator = Validator::make($r->all(), $rules, $messages);
-
-        if($validator->fails()){
-            $errorMsg = $validator->errors();
-            return redirect()->back()->with('errorx', $errorMsg);
-        }
-
-        $idx = $r->input('id');
-        try {
-            $id = Crypt::decryptString($idx);
-        } catch (DecryptException $e) {
-            return response()->json('ID Tidak Dikenali!', 400);
-        }
-        
-        $parent = $r->input('parent');
-        $d = DB::table('registers as a')->join('students as b', 'a.student','=','b.id')->select('b.name')->where('a.id', $id)->first();
-
-        DB::table('registers')->where('id', $id)->update([
-            'parent'     => $parent,
-            'user'       => Auth::user()->name,
-            'updated_at' => now()
-        ]);
-
-        return redirect()->back()->with('success', 'Berhasil update data '.$d->name);
     }
 
     public function scan()
@@ -135,18 +97,33 @@ class PresenceController extends Controller
 
     public function presence($key)
     {
-        $check = DB::table('registers')->where('uuid', $key)->count();
+        $event = DB::table('events')->select('id')->where('active', 'Y')->first();
+        $check = DB::table('registers')->where([['nrp', $key],['event', $event->id]])->count();
         if(!$check) {
             return redirect()->back()->with('error', 'Gagal! Kode tidak ditemukan!');
         }
-        $check = DB::table('registers')->where('uuid', $key)->whereNotNull('presence_at')->count();
+        $d = Db::table('students')->select('name')->where('nrp', $key)->first();
+        $reg = DB::table('registers')->select('id')->where([['nrp', $key],['event', $event->id]])->first();
+        $check = DB::table('registers')->where('id', $reg->id)->whereNull('presence_at')->count();
         if($check) {
-            return redirect()->back()->with('error', 'Gagal! Anda sudah melakukan presensi!');
+            DB::table('registers')->where('id', $reg->id)->update(['presence_at' => now()]);
+            return redirect()->back()->with('success', 'Berhasil melakukan presensi masuk '.$d->name);
         }
+        $check = DB::table('registers')->where('id', $reg->id)->whereNull('home_at')->count();
+        if($check) {
+            $now = now();
+            $cTime = DB::table('registers')->select('presence_at')->where('id', $reg->id)->first();
+            $presenceAt = Carbon::parse($cTime->presence_at);
+            $diffMinutes = $presenceAt->diffInMinutes($now);
 
-        $d = Db::table('registers as a')->join('students as b', 'a.student','=','b.id')->select('b.name')->where('a.uuid', $key)->first();
-        DB::table('registers')->where('uuid', $key)->update(['presence_at' => now()]);
-        return redirect()->back()->with('success', 'Berhasil melakukan presensi '.$d->name);
+            if($diffMinutes < 60) {
+                return back()->with('error','Gagal! Anda Belum Boleh Pulang!');
+            }
+            
+            DB::table('registers')->where('id', $reg->id)->update(['home_at' => now()]);
+            return redirect()->back()->with('success', 'Berhasil melakukan presensi pulang '.$d->name);
+        }
+        return redirect()->back()->with('error', 'Gagal! Anda sudah melakukan presensi pulang!');
     }
 
     public function presence_form(Request $r)
@@ -155,45 +132,64 @@ class PresenceController extends Controller
         if(!$key) {
             return redirect()->back()->with('error', 'Gagal! Kode QR wajib diisi!');
         }
-        $check = DB::table('registers')->where('uuid', $key)->count();
+        $event = DB::table('events')->select('id')->where('active', 'Y')->first();
+        $check = DB::table('registers')->where([['nrp', $key],['event', $event->id]])->count();
         if(!$check) {
             return redirect()->back()->with('error', 'Gagal! Kode tidak ditemukan!');
         }
-        $check = DB::table('registers')->where('uuid', $key)->whereNotNull('presence_at')->count();
+        $d = Db::table('students')->select('name')->where('nrp', $key)->first();
+        $reg = DB::table('registers')->select('id')->where([['nrp', $key],['event', $event->id]])->first();
+        $check = DB::table('registers')->where('id', $reg->id)->whereNull('presence_at')->count();
         if($check) {
-            return redirect()->back()->with('error', 'Gagal! Anda sudah melakukan presensi!');
+            DB::table('registers')->where('id', $reg->id)->update(['presence_at' => now()]);
+            return redirect()->back()->with('success', 'Berhasil melakukan presensi masuk '.$d->name);
         }
+        $check = DB::table('registers')->where('id', $reg->id)->whereNull('home_at')->count();
+        if($check) {
+            $now = now();
+            $cTime = DB::table('registers')->select('presence_at')->where('id', $reg->id)->first();
+            $presenceAt = Carbon::parse($cTime->presence_at);
+            $diffMinutes = $presenceAt->diffInMinutes($now);
 
-        $d = Db::table('registers as a')->join('students as b', 'a.student','=','b.id')->select('b.name')->where('a.uuid', $key)->first();
-        DB::table('registers')->where('uuid', $key)->update(['presence_at' => now()]);
-        return redirect()->back()->with('success', 'Berhasil melakukan presensi '.$d->name);
+            if($diffMinutes < 60) {
+                return back()->with('error','Gagal! Anda Belum Boleh Pulang!');
+            }
+            
+            DB::table('registers')->where('id', $reg->id)->update(['home_at' => now()]);
+            return redirect()->back()->with('success', 'Berhasil melakukan presensi pulang '.$d->name);
+        }
+        return redirect()->back()->with('error', 'Gagal! Anda sudah melakukan presensi pulang!');   
     }
 
     public function show()
     {
-        return view('operator.show');
+        $e = DB::table('events')->select('id')->where('active', 'Y')->first();
+        return view('operator.show',['event' => $e->id]);
     }
 
     public function show_data(Request $r)
     {
         if($r->ajax()) {
-            $check = DB::table('registers as a')->join('students as b', 'a.student','=','b.id')
-            ->select('b.name','b.class','a.parent','b.seat_number','b.seat_number_parent','a.presence_at')
-            ->whereNotNull('presence_at')->count();
+            $event = $r->input('events') ?? null;
+            $check = DB::table('registers')->where('event', $event)->whereNotNull('presence_at')->count();
             if($check) {
                 $data = DB::table('registers as a')->join('students as b', 'a.student','=','b.id')
-                    ->select('b.name','b.class','a.parent','b.seat_number','b.seat_number_parent','a.presence_at')
-                    ->whereNotNull('presence_at')->orderBy('presence_at', 'desc')->limit(10)->get();
+                    ->select('b.name','b.division','b.class','a.presence_at','a.home_at')
+                    ->whereNotNull('a.presence_at')->orderBy('a.home_at', 'desc')->orderBy('a.presence_at', 'desc')->limit(10)->get();
     
                 foreach ($data as $d) {
                     $pa = date('d-m-Y H:i:s', strtotime($d->presence_at));
+                    if($d->home_at) {
+                        $ha = date('d-m-Y H:i:s', strtotime($d->home_at));
+                    } else {
+                        $ha = '';
+                    }
                     $dataFix[] = [
-                        'name'             => $d->name,
-                        'class'            => $d->class,
-                        'parent'           => $d->parent,
-                        'seatNumber'       => $d->seat_number,
-                        'seatNumberParent' => $d->seat_number_parent,
-                        'presence'         => $pa,
+                        'name'     => $d->name,
+                        'division' => $d->division,
+                        'class'    => $d->class,
+                        'presence' => $pa,
+                        'home'     => $ha,
                     ];
                 }
             } else {
@@ -212,24 +208,25 @@ class PresenceController extends Controller
             return response()->json('ID Tidak Dikenali!', 400);
         }
 
-        $s = DB::table('registers as a')->join('students as b', 'a.student','=','b.id')->select('b.name','b.seat_number','b.seat_number_parent','a.uuid')->where('a.id', $id)->first();
+        $s = DB::table('registers as a')->join('students as b', 'a.student','=','b.id')->select('a.nrp','b.name')->where('a.id', $id)->first();
         $customPaper = array(0,0,481.8897638,623.6220472);
-        $pdf = Pdf::loadView('pdf', ['id'=>$id,'seatNumber'=>$s->seat_number,'seatNumberParent'=>$s->seat_number_parent,'uuid'=>$s->uuid,'name'=>$s->name])->setPaper($customPaper, 'potrait');
+        $pdf = Pdf::loadView('pdf', ['id'=>$id,'nrp'=>$s->nrp,'name'=>$s->name])->setPaper($customPaper, 'potrait');
         return $pdf->stream('QrCode Pesat Pelepasan '.$s->name.'.pdf');
     }
 
-    // public function download(Request $r)
-    // {
-    //     $year  = $r->input('year') ?? null;
-    //     $class = $r->input('classSelect') ?? null;
+    public function download(Request $r)
+    {
+        $event    = $r->input('event_d') ?? null;
+        $division = $r->input('div_d') ?? null;
 
-    //     $data = DB::table('registers as a')
-    //         ->join('students as b', 'a.student','=','b.id')
-    //         ->select('b.name','b.class','b.year','a.parent','b.seat_number','b.seat_number_parent','a.user','a.created_at','a.updated_at','a.presence_at');
-    //     if($year) { $data = $data->where('b.year', $year); }
-    //     if($class) { $data = $data->where('b.class', $class); }
-    //     $data = $data->get();
+        $data = DB::table('registers as a')
+            ->join('students as b', 'a.student','=','b.id')
+            ->join('events as c', 'a.event','=','c.id')
+            ->select('a.nrp','b.name','b.division','b.class','c.name as event','a.created_at','a.presence_at','a.home_at');
+        if($event) { $data = $data->where('a.event', $event); }
+        if($division) { $data = $data->where('b.division', $division); }
+        $data = $data->get();
 
-    //     return Excel::download(new PresenceExport($data), 'Kehadiran_Pelepasan.xlsx');
-    // }
+        return Excel::download(new PresenceExport($data), 'Presensi Kopasus.xlsx');
+    }
 }

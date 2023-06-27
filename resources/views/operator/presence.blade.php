@@ -47,7 +47,7 @@
                             <select name="eventselect" id="" class="form-select">
                                 <option value="">--Pilih--</option>
                                 @foreach($event as $e)
-                                    <option value="{{ $e->id }}" {{ $e->id === $eventSelect ? 'selected' : '' }}>{{ $e->name }}</option>
+                                    <option value="{{ $e->id }}" {{ $e->id == $eventSelect ? 'selected' : '' }}>{{ $e->name }}</option>
                                 @endforeach
                             </select>
                             <div class="invalid-feedback">Acara Wajib Diisi!</div>
@@ -57,7 +57,7 @@
                             <select name="divselect" class="form-select">
                                 <option value="">--pilih kelas--</option>
                                 @foreach ($division as $d)
-                                    <option value="{{ $d->code }}" {{ $d->code === $divSelect ? 'selected' : '' }}>{{ $d->code }}</option>
+                                    <option value="{{ $d->code }}" {{ $d->code == $divSelect ? 'selected' : '' }}>{{ $d->code }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -85,7 +85,8 @@
                         <th>Nama</th>
                         <th>Divisi</th>
                         <th>Acara</th>
-                        <th>Kehadiran</th>
+                        <th>Datang</th>
+                        <th>Pulang</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -93,44 +94,24 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="edit" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="show" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit</h5>
+                <h5 class="modal-title">Detail</h5>
                 <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <dl class="row">
                     <dt class="col-sm-4">Nama</dt><dd class="col-sm-8" id="name"></dd>
                     <dt class="col-sm-4">Kelas</dt><dd class="col-sm-8" id="classes"></dd>
-                    <dt class="col-sm-4">Tahun</dt><dd class="col-sm-8" id="year"></dd>
-                    <dt class="col-sm-4">Kursi Siswa</dt><dd class="col-sm-8" id="seatNumber"></dd>
-                    <dt class="col-sm-4">Kursi Orangtua</dt><dd class="col-sm-8" id="seatNumberParent"></dd>
+                    <dt class="col-sm-4">Divisi</dt><dd class="col-sm-8" id="division"></dd>
+                    <dt class="col-sm-4">Acara</dt><dd class="col-sm-8" id="event"></dd>
                     <dt class="col-sm-4">User</dt><dd class="col-sm-8" id="user"></dd>
-                    <dt class="col-sm-4">Registrasi</dt><dd class="col-sm-8" id="creat"></dd>
-                    <dt class="col-sm-4">Update</dt><dd class="col-sm-8" id="update"></dd>
-                    <dt class="col-sm-4">Kehadiran</dt><dd class="col-sm-8" id="presence"></dd>
+                    <dt class="col-sm-4">Registrasi</dt><dd class="col-sm-8" id="create"></dd>
+                    <dt class="col-sm-4">Datang</dt><dd class="col-sm-8" id="presence"></dd>
+                    <dt class="col-sm-4">Pulang</dt><dd class="col-sm-8" id="home"></dd>
                 </dl>
-                <form action="" method="post" id="formEdit" novalidate>
-                @csrf
-                <input type="hidden" name="id" id="id">
-                    <div class="row">
-                        <div class="col-sm-12 mb-3">
-                            <label class="form-label">Nama Lengkap Orangtua (beserta gelar)<div class="required">*</div></label>
-                            <input type="text" class="form-control" name="parent" id="parent" required>
-                            <div class="invalid-feedback">Nama Lengkap Orangtua Wajib Diisi!</div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <button class="btn btn-sm btn-primary" type="submit" id="submitEdit">Simpan</button>
-                            <div class="spinner-border text-info" role="status" id="loadEdit">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
@@ -151,72 +132,44 @@ $(function () {
             {data: 'division', name: 'division'},
             {data: 'event', name: 'event'},
             {data: 'presence', name: 'presence'},
+            {data: 'home', name: 'home'},
             {data: 'action', name: 'action', orderable: false, searchable: false},
         ],
         responsive: true
     });
 });
 
-(function () {
-    'use strict';
-    const formEdit = document.querySelectorAll('#formEdit');
-    Array.prototype.slice.call(formEdit)
-    .forEach(form => {
-      form.addEventListener('submit', event => {
-        if (!form.checkValidity()) {
-          event.preventDefault()
-          event.stopPropagation()
-        }
-        
-        if (form.checkValidity() === true) {
-            $('#submitEdit').hide();
-            $('#loadEdit').show();
-        }
-        form.classList.add('was-validated')
-      }, false)
-    });
-})();
-
-var edit = document.getElementById('edit');
-edit.addEventListener('show.coreui.modal', function (event) {
+var show = document.getElementById('show');
+show.addEventListener('show.coreui.modal', function (event) {
     var button = event.relatedTarget;
-    var id = button.getAttribute('data-coreui-id');
     var name = button.getAttribute('data-coreui-name');
-    var classes = button.getAttribute('data-coreui-classes');
-    var year = button.getAttribute('data-coreui-year');
-    var parent = button.getAttribute('data-coreui-parent');
-    var seatNumber = button.getAttribute('data-coreui-seatnumber');
-    var seatNumberParent = button.getAttribute('data-coreui-seatnumberparent');
+    var division = button.getAttribute('data-coreui-division');
+    var classes = button.getAttribute('data-coreui-class');
+    var events = button.getAttribute('data-coreui-event');
     var user = button.getAttribute('data-coreui-user');
-    var creat = button.getAttribute('data-coreui-creat');
-    var update = button.getAttribute('data-coreui-update');
+    var creates = button.getAttribute('data-coreui-create');
     var presence = button.getAttribute('data-coreui-presence');
+    var home = button.getAttribute('data-coreui-home');
     
-    var modalTitle = edit.querySelector('.modal-title');
-    var modalBodyId = edit.querySelector('.modal-body #id');
-    var modalBodyName = edit.querySelector('.modal-body #name');
-    var modalBodyClasses = edit.querySelector('.modal-body #classes');
-    var modalBodyYear = edit.querySelector('.modal-body #year');
-    var modalBodyParent = edit.querySelector('.modal-body #parent');
-    var modalBodySeatNumber = edit.querySelector('.modal-body #seatNumber');
-    var modalBodySeatNumberParent = edit.querySelector('.modal-body #seatNumberParent');
-    var modalBodyUser = edit.querySelector('.modal-body #user');
-    var modalBodyCreat = edit.querySelector('.modal-body #creat');
-    var modalBodyUpdate = edit.querySelector('.modal-body #update');
-    var modalBodyPresence = edit.querySelector('.modal-body #presence');
+    var modalTitle = show.querySelector('.modal-title');
+    var modalBodyName = show.querySelector('.modal-body #name');
+    var modalBodyDivision = show.querySelector('.modal-body #division');
+    var modalBodyClass = show.querySelector('.modal-body #classes');
+    var modalBodyEvent = show.querySelector('.modal-body #event');
+    var modalBodyUser = show.querySelector('.modal-body #user');
+    var modalBodyCreate = show.querySelector('.modal-body #create');
+    var modalBodyPresence = show.querySelector('.modal-body #presence');
+    var modalBodyHome = show.querySelector('.modal-body #home');
     
-    modalTitle.textContent = 'Edit data ' + name ;
-    modalBodyId.value = id;
+    modalTitle.textContent = 'Detail data ' + name ;
     modalBodyName.textContent = ': ' + name;
-    modalBodyClasses.textContent = ': ' + classes;
-    modalBodyYear.textContent = ': ' + year;
-    modalBodyParent.value = parent;
-    modalBodySeatNumber.textContent = ': ' + seatNumber;
-    modalBodySeatNumberParent.textContent = ': ' + seatNumberParent;
+    modalBodyDivision.textContent = ': ' + division;
+    modalBodyClass.textContent = ': ' + classes;
+    modalBodyEvent.textContent = ': ' + events;
     modalBodyUser.textContent = ': ' + user;
-    modalBodyCreat.textContent = ': ' + creat;
-    modalBodyUpdate.textContent = ': ' + update;
+    modalBodyCreate.textContent = ': ' + creates;
     modalBodyPresence.textContent = ': ' + presence;
+    modalBodyHome.textContent = ': ' + home;
 });
 </script>
 @endsection
