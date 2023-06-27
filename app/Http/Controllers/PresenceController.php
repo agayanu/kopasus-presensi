@@ -11,40 +11,31 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\PresenceExport;
+// use App\Exports\PresenceExport;
 
 class PresenceController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            if(!in_array(Auth::user()->role, ['0','1'])) {
-                return redirect()->route('home');
-            }
-
-            return $next($request);
-        });
-    }
-
     public function index(Request $r)
     {
-        $year = $r->input('year') ?? now()->format('Y');
-        $classSelect = $r->input('class') ?? null;
-        $class = DB::table('students')->distinct()->get('class');
-        return view('operator.presence',['class' => $class,'year' => $year,'classSelect' => $classSelect]);
+        $event = DB::table('events')->select('id','name')->where('active', 'Y')->get();
+        $division = DB::table('divisions')->select('code')->get();
+        $eventSelect = $r->input('eventselect') ?? null;
+        $divSelect = $r->input('divselect') ?? null;
+        return view('operator.presence',['event' => $event,'division' => $division,'eventSelect' => $eventSelect,'divSelect' => $divSelect]);
     }
 
     public function data(Request $r)
     {
-        $year = $r->input('year');
-        $class = $r->input('class');
+        $eventSelect = $r->input('eventselect') ?? null;
+        $divSelect = $r->input('divselect') ?? null;
         if($r->ajax())
         {
             $data = DB::table('registers as a')
                 ->join('students as b', 'a.student','=','b.id')
-                ->select('a.id','b.name','b.class','b.year','a.parent','b.seat_number','b.seat_number_parent','a.user','a.created_at','a.updated_at','a.presence_at');
-            if($year) { $data = $data->where('b.year', $year); }
-            if($class) { $data = $data->where('b.class', $class); }
+                ->join('events as c', 'a.event','=','c.id')
+                ->select('a.id','b.name','b.division','c.name as event','a.user','a.created_at','a.updated_at','a.presence_at');
+            if($eventSelect) { $data = $data->where('a.event', $eventSelect); }
+            if($divSelect) { $data = $data->where('b.division', $divSelect); }
             $dataCount = $data->count();
             $data      = $data->get();
 
@@ -68,28 +59,23 @@ class PresenceController extends Controller
                 }
                 $idEnc = Crypt::encryptString($d->id);
                 $data_fix[] = [
-                    'id'               => $idEnc,
-                    'name'             => $d->name,
-                    'class'            => $d->class,
-                    'year'             => $d->year,
-                    'parent'           => $d->parent,
-                    'seatNumber'       => $d->seat_number,
-                    'seatNumberParent' => $d->seat_number_parent,
-                    'user'             => $d->user,
-                    'creat'            => $ca,
-                    'update'           => $ua,
-                    'presence'         => $pa
+                    'id'       => $idEnc,
+                    'name'     => $d->name,
+                    'division' => $d->division,
+                    'event'    => $d->event,
+                    'user'     => $d->user,
+                    'create'   => $ca,
+                    'update'   => $ua,
+                    'presence' => $pa
                 ];
             }
 
             return DataTables::of($data_fix)
             ->addColumn('action', function($row){
                 $editBtn = '<button class="btn btn-sm btn-success tooltips" type="button" data-coreui-toggle="modal" data-coreui-target="#edit" 
-                    data-coreui-id="'.$row['id'].'" data-coreui-name="'.$row['name'].'" data-coreui-classes="'.$row['class'].'" 
-                    data-coreui-year="'.$row['year'].'" data-coreui-parent="'.$row['parent'].'" 
-                    data-coreui-seatnumber="'.$row['seatNumber'].'" data-coreui-seatnumberparent="'.$row['seatNumberParent'].'" 
-                    data-coreui-user="'.$row['user'].'" data-coreui-creat="'.$row['creat'].'" data-coreui-update="'.$row['update'].'" 
-                    data-coreui-presence="'.$row['presence'].'">
+                    data-coreui-id="'.$row['id'].'" data-coreui-name="'.$row['name'].'" data-coreui-division="'.$row['division'].'" 
+                    data-coreui-event="'.$row['event'].'" data-coreui-user="'.$row['user'].'" data-coreui-create="'.$row['create'].'" 
+                    data-coreui-update="'.$row['update'].'" data-coreui-presence="'.$row['presence'].'">
                     <i class="cil-pencil" style="font-weight:bold"></i><span class="tooltiptext">Edit</span></button>
                     ';
                 $printBtn = '<a href="'.route('presence.print',['id' => $row['id']]).'" target="_blank" class="btn btn-sm btn-secondary tooltips">
@@ -232,18 +218,18 @@ class PresenceController extends Controller
         return $pdf->stream('QrCode Pesat Pelepasan '.$s->name.'.pdf');
     }
 
-    public function download(Request $r)
-    {
-        $year  = $r->input('year') ?? null;
-        $class = $r->input('classSelect') ?? null;
+    // public function download(Request $r)
+    // {
+    //     $year  = $r->input('year') ?? null;
+    //     $class = $r->input('classSelect') ?? null;
 
-        $data = DB::table('registers as a')
-            ->join('students as b', 'a.student','=','b.id')
-            ->select('b.name','b.class','b.year','a.parent','b.seat_number','b.seat_number_parent','a.user','a.created_at','a.updated_at','a.presence_at');
-        if($year) { $data = $data->where('b.year', $year); }
-        if($class) { $data = $data->where('b.class', $class); }
-        $data = $data->get();
+    //     $data = DB::table('registers as a')
+    //         ->join('students as b', 'a.student','=','b.id')
+    //         ->select('b.name','b.class','b.year','a.parent','b.seat_number','b.seat_number_parent','a.user','a.created_at','a.updated_at','a.presence_at');
+    //     if($year) { $data = $data->where('b.year', $year); }
+    //     if($class) { $data = $data->where('b.class', $class); }
+    //     $data = $data->get();
 
-        return Excel::download(new PresenceExport($data), 'Kehadiran_Pelepasan.xlsx');
-    }
+    //     return Excel::download(new PresenceExport($data), 'Kehadiran_Pelepasan.xlsx');
+    // }
 }

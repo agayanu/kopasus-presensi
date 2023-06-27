@@ -1,9 +1,5 @@
 @extends('layouts.app')
 
-@section('header')
-@include('layouts.datetimepicker-header')
-@endsection
-
 @section('content')
 <div class="card mb-3">
     <div class="card-body">
@@ -13,18 +9,31 @@
 @include('layouts.flash-message')
 <div class="card mb-3">
     <div class="card-body">
-        {{-- <form action="{{ route('presence-set.clear') }}" method="post"> --}}
-        <form action="#" method="post">
+        <div class="mb-3 text-center"><h2>HAPUS REGISTRASI/PRESENSI</h2></div>
+        <form action="{{ route('presence-set.clear') }}" method="post">
             @csrf
             <div class="row justify-content-center">
-                <div class="col-sm-1">
-                    <input type="text" class="form-control" name="year" id="year" placeholder="yyyy" value="{{ $year }}" required>
+                <div class="col-sm-2">
+                    <select name="gen" class="form-select" required>
+                        <option value="">--Pilih Angkatan--</option>
+                        @foreach($gen as $g)
+                            <option value="{{ $g->gen }}">{{ $g->gen }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="col-sm-2">
-                    <select name="set" class="form-select">
-                        <option value="">-</option>
+                    <select name="set" class="form-select" required>
+                        <option value="">--Pilih Jenis--</option>
                         <option value="regist">Registrasi</option>
                         <option value="presence">Presensi</option>
+                    </select>
+                </div>
+                <div class="col-sm-2">
+                    <select name="event" class="form-select" required>
+                        <option value="">--Pilih Acara--</option>
+                        @foreach($event as $e)
+                            <option value="{{ $e->id }}">{{ $e->name }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="col-sm-2">
@@ -34,15 +43,4 @@
         </form>
     </div>
 </div>
-@endsection
-
-@section('footer')
-<script src="{{ asset('assets/jquery/jquery-3.6.1.min.js') }}"></script>
-@include('layouts.datetimepicker-footer')
-<script>
-$('#year').datetimepicker({
-    locale: 'id',
-    format: 'YYYY'
-});
-</script>
 @endsection

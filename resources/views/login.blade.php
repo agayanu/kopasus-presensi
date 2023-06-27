@@ -32,7 +32,7 @@
             margin-bottom: 15px;
         }
         .pesattext {
-            font-size: 35px;
+            font-size: 28px;
             font-weight: bold;
             font-family: fantasy;
             background: -webkit-linear-gradient(#eee, #333);

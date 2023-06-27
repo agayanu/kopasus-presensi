@@ -9,29 +9,21 @@ use Illuminate\Support\Facades\Validator;
 
 class PresenceSetController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            if(Auth::user()->role != '1') {
-                return redirect()->route('home');
-            }
-
-            return $next($request);
-        });
-    }
-
     public function clear(Request $r)
     {
         $rules = [
-            'year' => 'required|integer',
-            'set'  => 'required|in:regist,presence',
+            'gen'   => 'required|integer',
+            'set'   => 'required|in:regist,presence',
+            'event' => 'required|integer',
         ];
     
         $messages = [
-            'year.required' => 'Tahun wajib diisi',
-            'year.string'   => 'Tahun harus angka',
-            'set.required'  => 'Set wajib diisi',
-            'set.string'    => 'Set tidak sesuai pilihan',
+            'gen.required'   => 'Angkatan wajib diisi',
+            'gen.integer'    => 'Angkatan harus angka',
+            'set.required'   => 'Set wajib diisi',
+            'set.string'     => 'Set tidak sesuai pilihan',
+            'event.required' => 'Acara wajib diisi',
+            'event.integer'  => 'Acara tidak sesuai pilihan',
         ];
 
         $validator = Validator::make($r->all(), $rules, $messages);
@@ -40,23 +32,30 @@ class PresenceSetController extends Controller
             return redirect()->back()->with('error', 'Gagal! Terdapat masalah!');
         }
 
-        $year = $r->input('year');
+        $gen = $r->input('gen');
         $set = $r->input('set');
-        $check = DB::table('registers')->where('year', $year)->count();
+        $event = $r->input('event');
+        $check = DB::table('registers as a')
+            ->join('students as b', 'a.student','=','b.id')
+            ->where([['a.event', $event],['b.gen', $gen]])->count();
         if($check) {
             if($set === 'regist')
             {
-                DB::table('registers')->where('year', $year)->delete();
+                DB::table('registers as a')
+                    ->join('students as b', 'a.student','=','b.id')
+                    ->where([['a.event', $event],['b.gen', $gen]])->delete();
                 $info = 'registrasi';
             }
             if($set === 'presence')
             {
-                DB::table('registers')->where('year', $year)->update(['presence_at' => null]);
+                DB::table('registers as a')
+                    ->join('students as b', 'a.student','=','b.id')
+                    ->where([['a.event', $event],['b.gen', $gen]])->update(['a.presence_at' => null]);
                 $info = 'presensi';
             }
-            return redirect()->back()->with('success', 'Berhasil menghapus data '.$info.' tahun '.$year);
+            return redirect()->back()->with('success', 'Berhasil menghapus data '.$info.' acara '.$event.' angkatan '.$gen);
         }
 
-        return redirect()->back()->with('error', 'Tidak ada data tahun '.$year);
+        return redirect()->back()->with('error', 'Data tidak ditemukan!');
     }
 }
