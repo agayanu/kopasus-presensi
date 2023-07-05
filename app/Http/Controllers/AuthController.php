@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -44,6 +45,12 @@ class AuthController extends Controller
   
         $user = $request->input('username');
         $pass = $request->input('password');
+
+        $check = DB::table('users')->where('username', $user)->whereNull('deleted_at')->count();
+        if(empty($check)) {
+            Session::flash('error', 'Username atau Password salah!');
+            return redirect()->route('login');
+        }
 
         $data = [
             'username' => $user,

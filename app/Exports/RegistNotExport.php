@@ -28,7 +28,7 @@ class RegistNotExport implements FromCollection, WithMapping, WithHeadings, With
         return [
             $data->name,
             $data->class,
-            $data->year,
+            $data->division,
         ];
     }
 
@@ -36,13 +36,13 @@ class RegistNotExport implements FromCollection, WithMapping, WithHeadings, With
     {
         return [
             [
-                'BELUM REGISTRASI PESAT PELEPASAN',
+                'BELUM REGISTRASI ACARA KOPASUS',
             ],
             [' '],
             [
                 'Nama',
                 'Kelas',
-                'Tahun',
+                'Divisi',
             ],
         ];
     }

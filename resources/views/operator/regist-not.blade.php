@@ -38,16 +38,20 @@
                 <form action="" method="get">
                     <div class="row">
                         <div class="col-sm-2 mb-3">
-                            <label class="form-label">Tahun <div class="required">*</div></label>
-                            <input type="text" class="form-control" name="year" id="year" placeholder="yyyy" value="{{ $year }}" required>
-                            <div class="invalid-feedback">Tahun Wajib Diisi!</div>
+                            <label class="form-label">Acara</label>
+                            <select name="eventselect" id="" class="form-select">
+                                @foreach($event as $e)
+                                    <option value="{{ $e->id }}" {{ $e->id == $eventSelect ? 'selected' : '' }}>{{ $e->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="invalid-feedback">Acara Wajib Diisi!</div>
                         </div>
                         <div class="col-sm-2 mb-3">
-                            <label class="form-label">Kelas</label>
-                            <select name="class" class="form-select">
+                            <label class="form-label">Divisi</label>
+                            <select name="divselect" class="form-select">
                                 <option value="">--pilih kelas--</option>
-                                @foreach ($class as $c)
-                                    <option value="{{ $c->class }}" {{ $c->class === $classSelect ? 'selected' : '' }}>{{ $c->class }}</option>
+                                @foreach ($division as $d)
+                                    <option value="{{ $d->code }}" {{ $d->code == $divSelect ? 'selected' : '' }}>{{ $d->code }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -59,8 +63,8 @@
             </div>
             <div class="col-sm-2 align-self-end mb-3">
                 <form action="{{ route('regist-not.download') }}" method="get" style="text-align: right">
-                    <input type="hidden" name="year_d" value="{{ $year }}">
-                    <input type="hidden" name="class_d" value="{{ $classSelect }}">
+                    <input type="hidden" name="event_d" value="{{ $eventSelect }}">
+                    <input type="hidden" name="div_d" value="{{ $divSelect }}">
                     <button class="btn btn-sm btn-success tooltips" type="submit">
                         <i class="cil-cloud-download" style="font-weight: bold;font-size: 20px;"></i> Excel
                         <span class="tooltiptext">Download Excel</span>
@@ -74,7 +78,7 @@
                     <tr>
                         <th>Nama</th>
                         <th>Kelas</th>
-                        <th>Tahun</th>
+                        <th>Divisi</th>
                     </tr>
                 </thead>
             </table>
@@ -84,7 +88,7 @@
 @endsection
 
 @section('footer')
-<script src="{{ asset('storage/jquery/jquery-3.6.1.min.js') }}"></script>
+<script src="{{ asset('assets/jquery/jquery-3.6.1.min.js') }}"></script>
 @include('layouts.datetimepicker-footer')
 <script>
 $('#year').datetimepicker({
@@ -98,11 +102,11 @@ $(function () {
     var table = $('#datatable').DataTable({
         processing: true,
         serverSide: true,
-        ajax: "{{ route('regist-not.data', ['year'=>$year,'class'=>$classSelect]) }}".replace(/&amp;/g, "&"),
+        ajax: "{{ route('regist-not.data', ['eventselect'=>$eventSelect,'divselect'=>$divSelect]) }}".replace(/&amp;/g, "&"),
         columns: [
             {data: 'name', name: 'name'},
             {data: 'class', name: 'class'},
-            {data: 'year', name: 'year'},
+            {data: 'division', name: 'division'},
         ],
         responsive: true
     });

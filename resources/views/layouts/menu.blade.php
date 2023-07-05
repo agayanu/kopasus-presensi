@@ -26,6 +26,6 @@
 </li>
 <li class="nav-item {{ Request::is('user') ? 'active' : '' }}">
     <a class="nav-link" href="{!! route('user') !!}">
-        <i class="nav-icon cil-home"></i> Pengguna
+        <i class="nav-icon cil-home"></i> Admin
     </a>
 </li>

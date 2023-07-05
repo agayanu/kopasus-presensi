@@ -13,17 +13,6 @@ use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            if(Auth::user()->role != '1') {
-                return redirect()->route('home');
-            }
-
-            return $next($request);
-        });
-    }
-
     public function index(Request $r)
     {
         return view('admin.user');
@@ -34,7 +23,7 @@ class UserController extends Controller
         if($r->ajax())
         {
             $data = DB::table('users')
-                ->select('id','name','role','username','created_at','updated_at')
+                ->select('id','name','username','created_at','updated_at')
                 ->whereNull('deleted_at');
             $dataCount = $data->count();
             $data      = $data->get();
@@ -51,14 +40,10 @@ class UserController extends Controller
                 } else {
                     $ca = date('d-m-Y H:i:s', strtotime($d->created_at));
                 }
-                if($d->role === '0') { $role = 'Operator'; }
-                if($d->role === '1') { $role = 'Admin'; }
                 $idEnc = Crypt::encryptString($d->id);
                 $data_fix[] = [
                     'id'       => $idEnc,
                     'name'     => $d->name,
-                    'role'     => $role,
-                    'roleCode' => $d->role,
                     'username' => $d->username,
                     'update'   => $ca,
                 ];
@@ -67,8 +52,7 @@ class UserController extends Controller
             return DataTables::of($data_fix)
             ->addColumn('action', function($row){
                 $editBtn = '<button class="btn btn-sm btn-success tooltips" type="button" data-coreui-toggle="modal" data-coreui-target="#edit" 
-                    data-coreui-id="'.$row['id'].'" data-coreui-name="'.$row['name'].'" data-coreui-rolecode="'.$row['roleCode'].'" 
-                    data-coreui-username="'.$row['username'].'">
+                    data-coreui-id="'.$row['id'].'" data-coreui-name="'.$row['name'].'" data-coreui-username="'.$row['username'].'">
                     <i class="cil-pencil" style="font-weight:bold"></i><span class="tooltiptext">Edit</span></button>
                     ';
                 $resetBtn = '<button class="btn btn-sm btn-secondary tooltips" type="button" data-coreui-toggle="modal" data-coreui-target="#reset" 
@@ -90,15 +74,12 @@ class UserController extends Controller
     {
         $rules = [
             'name'     => 'required|string',
-            'role'     => 'required|integer',
             'username' => 'required|string',
         ];
     
         $messages = [
             'name.required'     => 'Nama Lengkap wajib diisi',
             'name.string'       => 'Nama Lengkap harus teks',
-            'role.required'     => 'Kelompok wajib diisi',
-            'role.integer'      => 'Kelompok tidak sesuai pilihan',
             'username.required' => 'Username wajib diisi',
             'username.string'   => 'Username harus teks',
         ];
@@ -111,7 +92,6 @@ class UserController extends Controller
         }
         
         $name = $r->input('name');
-        $role = $r->input('role');
         $username = $r->input('username');
         $check = DB::table('users')->where('username', $username)->count();
         if($check) {
@@ -120,7 +100,6 @@ class UserController extends Controller
 
         DB::table('users')->insert([
             'name'       => $name,
-            'role'       => $role,
             'username'   => $username,
             'password'   => Hash::make('123456'),
             'created_at' => now()
@@ -134,7 +113,6 @@ class UserController extends Controller
         $rules = [
             'id'       => 'required|string',
             'name'     => 'required|string',
-            'role'     => 'required|integer',
             'username' => 'required|string',
         ];
     
@@ -143,8 +121,6 @@ class UserController extends Controller
             'id.string'         => 'ID tidak sesuai',
             'name.required'     => 'Nama Lengkap wajib diisi',
             'name.string'       => 'Nama Lengkap harus teks',
-            'role.required'     => 'Kelompok wajib diisi',
-            'role.integer'      => 'Kelompok tidak sesuai pilihan',
             'username.required' => 'Username wajib diisi',
             'username.string'   => 'Username harus teks',
         ];
@@ -164,13 +140,11 @@ class UserController extends Controller
         }
 
         $name = $r->input('name');
-        $role = $r->input('role');
         $username = $r->input('username');
         $check = DB::table('users')->where([['id', $id],['username', $username]])->count();
         if($check) {
             DB::table('users')->where('id', $id)->update([
                 'name'       => $name,
-                'role'       => $role,
                 'updated_at' => now(),
             ]);
         } else {
@@ -183,7 +157,6 @@ class UserController extends Controller
 
         DB::table('users')->where('id', $id)->update([
             'name'       => $name,
-            'role'       => $role,
             'username'   => $username,
             'updated_at' => now(),
         ]);
@@ -217,7 +190,7 @@ class UserController extends Controller
         }
 
         $d = DB::table('users')->select('name')->where('id', $id)->first();
-        DB::table('users')->where('id', $id)->delete();
+        DB::table('users')->where('id', $id)->update(['deleted_at' => now()]);
 
         return redirect()->back()->with('success', 'Berhasil hapus akun '.$d->name);
     }

@@ -11,39 +11,31 @@ use App\Exports\RegistNotExport;
 
 class RegistNotController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            if(!in_array(Auth::user()->role, ['0','1'])) {
-                return redirect()->route('home');
-            }
-
-            return $next($request);
-        });
-    }
-
     public function index(Request $r)
     {
-        $year = $r->input('year') ?? now()->format('Y');
-        $classSelect = $r->input('class') ?? null;
-        $class = DB::table('students')->distinct()->get('class');
-        return view('operator.regist-not',['class' => $class,'year' => $year,'classSelect' => $classSelect]);
+        $event = DB::table('events')->select('id','name')->get();
+        $division = DB::table('divisions')->select('code')->get();
+        $e = DB::table('events')->select('id')->where('active', 'Y')->first();
+        $eventSelect = $r->input('eventselect') ?? $e->id;
+        $divSelect = $r->input('divselect') ?? null;
+        return view('operator.regist-not',['event' => $event,'division' => $division,'eventSelect' => $eventSelect,'divSelect' => $divSelect]);
     }
 
     public function data(Request $r)
     {
-        $year = $r->input('year');
-        $class = $r->input('class');
+        $eventSelect = $r->input('eventselect') ?? null;
+        $divSelect = $r->input('divselect') ?? null;
         if($r->ajax())
         {
-            $data = DB::table('students as a')
-                ->leftJoin('registers as b', 'a.id','=','b.student')
-                ->select('a.name','a.class','a.year')
-                ->whereNull('b.student');
-            if($year) { $data = $data->where('a.year', $year); }
-            if($class) { $data = $data->where('a.class', $class); }
+            $dnot = DB::table('registers')
+                ->select('student')
+                ->where('event', $eventSelect);
+            $data = DB::table('students')
+                ->select('name','class','division')
+                ->whereNotIn('id', $dnot);
+            if($divSelect) { $data = $data->where('division', $divSelect); }
             $dataCount = $data->count();
-            $data      = $data->get();
+            $data = $data->get();
 
             if(empty($dataCount))
             {
@@ -53,9 +45,9 @@ class RegistNotController extends Controller
 
             foreach ( $data as $d ) {
                 $data_fix[] = [
-                    'name'  => $d->name,
-                    'class' => $d->class,
-                    'year'  => $d->year,
+                    'name'     => $d->name,
+                    'class'    => $d->class,
+                    'division' => $d->division,
                 ];
             }
 
@@ -65,17 +57,18 @@ class RegistNotController extends Controller
 
     public function download(Request $r)
     {
-        $year  = $r->input('year_d') ?? null;
-        $class = $r->input('class_d') ?? null;
+        $eventSelect = $r->input('event_d') ?? null;
+        $divSelect   = $r->input('div_d') ?? null;
 
-        $data = DB::table('students as a')
-                ->leftJoin('registers as b', 'a.id','=','b.student')
-                ->select('a.name','a.class','a.year')
-                ->whereNull('b.student');
-        if($year) { $data = $data->where('a.year', $year); }
-        if($class) { $data = $data->where('a.class', $class); }
-        $data = $data->orderBy('a.class')->orderBy('a.name')->get();
+        $dnot = DB::table('registers')
+            ->select('student')
+            ->where('event', $eventSelect);
+        $data = DB::table('students')
+            ->select('name','class','division')
+            ->whereNotIn('id', $dnot);
+        if($divSelect) { $data = $data->where('division', $divSelect); }
+        $data = $data->orderBy('division')->orderBy('name')->get();
 
-        return Excel::download(new RegistNotExport($data), 'Belum_Regist_Pelepasan.xlsx');
+        return Excel::download(new RegistNotExport($data), 'Belum_Regist.xlsx');
     }
 }
